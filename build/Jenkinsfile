@@ -5,12 +5,12 @@ podTemplate(label: 'chart-ingress-nginx', containers: [
     node('k2') {
         customContainer('helm-registry-agent'){
 
-            stage('debug') {
-                sillysh('export')
-            }
-
             stage('checkout') {
                 checkout scm
+            }
+
+            stage('debug') {
+                sillysh('export')
             }
 
             stage('set release') {
