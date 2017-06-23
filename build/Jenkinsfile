@@ -13,6 +13,10 @@ podTemplate(label: 'chart-ingress-nginx', containers: [
                 sillysh('export')
             }
 
+            stage('debug2) {
+                sillysh('helm plugin list')
+            }
+
             stage('set release') {
                 sillysh('sed \'s/0.0.1-dummy/\'${TAG}\'/\' < build/Chart.yaml.in > nginx-ingress/Chart.yaml')
             }
