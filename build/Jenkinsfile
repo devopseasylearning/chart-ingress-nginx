@@ -1,0 +1,50 @@
+podTemplate(label: 'chart-ingress-nginx', containers: [
+    containerTemplate(name: 'jnlp', image: 'quay.io/samsung_cnct/custom-jnlp:0.1', args: '${computer.jnlpmac} ${computer.name}'),
+    containerTemplate(name: 'helm-registry-agent', image: 'quay.io/samsung_cnct/helm-registry-agent:v0.1.0', ttyEnabled: true, command: 'cat', alwaysPullImage: true, resourceRequestMemory: '256Mi', resourceLimitMemory: '256Mi'),
+  ]) {
+    node('dummy') {
+        customContainer('helm-registry-agent'){
+
+            stage('checkout') {
+                checkout scm
+            }
+
+            stage('set release') {
+                sillysh('sed \'s/0.0.1-dummy/\'${TAG}\'/\' < build/Chart.yaml.in > nginx-ingress/Chart.yaml')
+            }
+
+            stage('log into quay') {
+                sillysh('helm registry login quay.io -u samsung_cnct+nginxingressrw -p no')
+            }
+
+            stage('release the release') {
+                sillysh('cd nginx-ingress && helm registry push quay.io/samsung_cnct/nginx-ingress -c stable')
+            }
+        }
+
+    }
+  }
+
+def sillysh(command) {
+  if (env.CONTAINER_NAME) {
+    if ((command instanceof String) || (command instanceof GString)) {
+      command = kubectl(command)
+    }
+
+    if (command instanceof LinkedHashMap) {
+      command["script"] = kubectl(command["script"])
+    }
+  }
+
+  sh(command)
+}
+
+def kubectl(command) {
+  "kubectl exec -i ${env.HOSTNAME} -c ${env.CONTAINER_NAME} -- /bin/sh -c 'cd ${env.WORKSPACE} && ${command}'"
+}
+
+def customContainer(String name, Closure body) {
+  withEnv(["CONTAINER_NAME=$name"]) {
+    body()
+  }
+}
