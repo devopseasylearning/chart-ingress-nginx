@@ -13,7 +13,7 @@ podTemplate(label: 'chart-ingress-nginx', containers: [
                 sillysh('export')
             }
 
-            stage('debug2) {
+            stage('debug2') {
                 sillysh('helm plugin list')
             }
 
